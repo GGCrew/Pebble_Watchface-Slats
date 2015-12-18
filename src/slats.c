@@ -60,6 +60,7 @@ static void init(void) {
   });
   const bool animated = true;
   window_stack_push(window, animated);
+  window_set_background_color(window, GColorBlack);
 
 	tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
 }
