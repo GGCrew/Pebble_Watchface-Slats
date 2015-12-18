@@ -1,0 +1,18 @@
+{
+  "uuid": "881efa9c-deb0-4bf9-a364-90d92e00a5e7",
+  "shortName": "slats",
+  "longName": "slats",
+  "companyName": "MakeAwesomeHappen",
+  "versionLabel": "1.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["aplite", "basalt", "chalk"],
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}
