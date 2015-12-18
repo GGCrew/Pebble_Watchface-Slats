@@ -38,8 +38,8 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-	text_time_layer = text_layer_create(bounds);
-	text_layer_set_font(text_time_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28));
+	text_time_layer = text_layer_create(GRect(0, 50, 144, 64));
+	text_layer_set_font(text_time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
   text_layer_set_text_color(text_time_layer, GColorWhite);
 	text_layer_set_text_alignment(text_time_layer, GTextAlignmentCenter);
   text_layer_set_background_color(text_time_layer, GColorClear);
