@@ -18,6 +18,7 @@
 				"file": "images/menu_icon.png",
 				"name": "IMAGE_MENU_ICON",
         "menuIcon": true
-			},
+			}
+		]
   }
 }
