@@ -1,18 +1,23 @@
 {
-  "uuid": "881efa9c-deb0-4bf9-a364-90d92e00a5e7",
-  "shortName": "slats",
-  "longName": "slats",
-  "companyName": "MakeAwesomeHappen",
+  "uuid": "47474372-6577-4c56-9d0e-2741edcb8af6",
+  "shortName": "Slats",
+  "longName": "Slats",
+  "companyName": "GG Crew",
   "versionLabel": "1.0",
   "sdkVersion": "3",
-  "targetPlatforms": ["aplite", "basalt", "chalk"],
+  "targetPlatforms": ["aplite"],
   "watchapp": {
-    "watchface": false
+    "watchface": true
   },
   "appKeys": {
-    "dummy": 0
   },
   "resources": {
-    "media": []
+    "media": [
+			{
+				"type": "png",
+				"file": "images/menu_icon.png",
+				"name": "IMAGE_MENU_ICON",
+        "menuIcon": true
+			},
   }
 }
