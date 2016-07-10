@@ -59,7 +59,8 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		// Move offscreen
 		layer_set_frame(text_layer_get_layer(text_time_layers[slat_counter]), GRect(TIME_X_ORIGIN, 170, 144, 1));
-		
+
+		// Animate slats
 		delay = slat_counter * 100;
 		slat_animations[slat_counter] = property_animation_create_layer_frame(
 			text_layer_get_layer(text_time_layers[slat_counter]), 
@@ -87,38 +88,18 @@ static void window_load(Window *window) {
   GRect bounds = layer_get_bounds(window_layer);
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		//APP_LOG(APP_LOG_LEVEL_DEBUG, "%d, %d, %d, %d", slat_counter, TIME_Y_ORIGIN+slat_counter, -slat_counter, TIME_Y_ORIGIN+slat_counter-slat_counter);
-		//text_time_layers[slat_counter] = text_layer_create(GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 144, SLAT_COUNT));
 		text_time_layers[slat_counter] = text_layer_create(layer_get_frame(window_layer));
 		text_layer_set_font(text_time_layers[slat_counter], fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
 		text_layer_set_text_color(text_time_layers[slat_counter], GColorWhite);
 		text_layer_set_text_alignment(text_time_layers[slat_counter], GTextAlignmentCenter);
 		text_layer_set_background_color(text_time_layers[slat_counter], GColorClear);
 
-		//layer_set_bounds(text_layer_get_layer(text_time_layers[slat_counter]), GRect(0, 0, 144, SLAT_COUNT));
-		//layer_set_bounds(text_layer_get_layer(text_time_layers[slat_counter]), GRect(0, -slat_counter / 2, 144, SLAT_COUNT));
-
+		// Create a new frame
+		// Set the frame dimensions to 1 pixel high
+		// Adjust the bounds to shift the layer's offset up
 		layer_add_child(window_layer, text_layer_get_layer(text_time_layers[slat_counter]));
 		layer_set_frame(text_layer_get_layer(text_time_layers[slat_counter]), GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 144, 1));
 		layer_set_bounds(text_layer_get_layer(text_time_layers[slat_counter]), GRect(0, -slat_counter, 144, SLAT_COUNT));
-		//bounds = layer_get_bounds(text_layer_get_layer(text_time_layers[slat_counter]));
-		//APP_LOG(APP_LOG_LEVEL_DEBUG, "%d, %d, %d, %d", bounds.origin.x, bounds.origin.y, bounds.size.w, bounds.size.h);
-		
-/*
-		if(slat_counter == 0) {
-			layer_add_child(window_layer, text_layer_get_layer(text_time_layers[slat_counter]));
-			layer_set_frame(text_layer_get_layer(text_time_layers[slat_counter]), GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 72, SLAT_COUNT));
-			layer_set_bounds(text_layer_get_layer(text_time_layers[slat_counter]), GRect(0, -slat_counter / 2, 144, SLAT_COUNT));
-			bounds = layer_get_bounds(text_layer_get_layer(text_time_layers[slat_counter]));
-			APP_LOG(APP_LOG_LEVEL_DEBUG, "%d, %d, %d, %d", bounds.origin.x, bounds.origin.y, bounds.size.w, bounds.size.h);
-		}
-		if(slat_counter == 24) {
-			layer_add_child(window_layer, text_layer_get_layer(text_time_layers[slat_counter]));
-			//layer_set_bounds(text_layer_get_layer(text_time_layers[slat_counter]), GRect(0, slat_counter, 144, SLAT_COUNT));
-			bounds = layer_get_bounds(text_layer_get_layer(text_time_layers[slat_counter]));
-			APP_LOG(APP_LOG_LEVEL_DEBUG, "%d, %d, %d, %d", bounds.origin.x, bounds.origin.y, bounds.size.w, bounds.size.h);
-		}
-*/
 	}
 }
 
