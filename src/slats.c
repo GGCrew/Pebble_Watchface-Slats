@@ -14,7 +14,9 @@
 
 static Window *window;
 
-static TextLayer *text_time_layers[SLAT_COUNT];
+static TextLayer *text_time_layer;
+
+static Layer *slat_layers[SLAT_COUNT];
 
 static PropertyAnimation *slat_animations[SLAT_COUNT];
 
@@ -23,7 +25,6 @@ void update_display_time(struct tm *tick_time) {
   // Need to be static because they're used by the system later.
   static char time_text[] = "00:00";
   char *time_format;
-	int slat_counter;
 
   if (clock_is_24h_style()) {
     time_format = "%R";
@@ -39,9 +40,7 @@ void update_display_time(struct tm *tick_time) {
     memmove(time_text, &time_text[1], sizeof(time_text) - 1);
   }
 
-	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		text_layer_set_text(text_time_layers[slat_counter], time_text);
-	}
+	text_layer_set_text(text_time_layer, time_text);
 }
 
 
@@ -58,12 +57,12 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		// Move offscreen
-		layer_set_frame(text_layer_get_layer(text_time_layers[slat_counter]), GRect(TIME_X_ORIGIN, 170, 144, 1));
+		layer_set_frame(slat_layers[slat_counter], GRect(TIME_X_ORIGIN, 170, 144, 1));
 
 		// Animate slats
 		delay = slat_counter * 100;
 		slat_animations[slat_counter] = property_animation_create_layer_frame(
-			text_layer_get_layer(text_time_layers[slat_counter]), 
+			slat_layers[slat_counter], 
 			NULL, 
 			&GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 144, 1)
 		);
@@ -87,28 +86,32 @@ static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
+	text_time_layer = text_layer_create(layer_get_frame(window_layer));
+	text_layer_set_font(text_time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
+	text_layer_set_text_color(text_time_layer, GColorWhite);
+	text_layer_set_text_alignment(text_time_layer, GTextAlignmentCenter);
+	text_layer_set_background_color(text_time_layer, GColorClear);
+	layer_add_child(window_layer, text_layer_get_layer(text_time_layer));
+
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		text_time_layers[slat_counter] = text_layer_create(layer_get_frame(window_layer));
-		text_layer_set_font(text_time_layers[slat_counter], fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
-		text_layer_set_text_color(text_time_layers[slat_counter], GColorWhite);
-		text_layer_set_text_alignment(text_time_layers[slat_counter], GTextAlignmentCenter);
-		text_layer_set_background_color(text_time_layers[slat_counter], GColorClear);
+		slat_layers[slat_counter] = layer_create(layer_get_frame(window_layer));
 
 		// Create a new frame
 		// Set the frame dimensions to 1 pixel high
 		// Adjust the bounds to shift the layer's offset up
-		layer_add_child(window_layer, text_layer_get_layer(text_time_layers[slat_counter]));
-		layer_set_frame(text_layer_get_layer(text_time_layers[slat_counter]), GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 144, 1));
-		layer_set_bounds(text_layer_get_layer(text_time_layers[slat_counter]), GRect(0, -slat_counter, 144, SLAT_COUNT));
+		layer_add_child(window_layer, slat_layers[slat_counter]);
+		layer_set_frame(slat_layers[slat_counter], GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 144, 1));
 	}
 }
 
 
 static void window_unload(Window *window) {
 	int slat_counter;
-	
+
+	text_layer_destroy(text_time_layer);
+
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		text_layer_destroy(text_time_layers[slat_counter]);
+		layer_destroy(slat_layers[slat_counter]);
 	}
 }
 
