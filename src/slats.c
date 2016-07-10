@@ -7,7 +7,7 @@
 #define TIME_X_ORIGIN 0
 #define TIME_Y_ORIGIN 50
 #define SLAT_COUNT 64
-#define ANIMATION_DURATION 1000
+#define ANIMATION_DURATION 500
 
 /**/
 
@@ -51,20 +51,20 @@ void animation_stopped(Animation *animation, bool finished, void *property_anima
 
 
 void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
-/*
 	int slat_counter;
 	int delay;
-*/
 	
 	update_display_time(tick_time);
 
-/*
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+		// Move offscreen
+		layer_set_frame(text_layer_get_layer(text_time_layers[slat_counter]), GRect(TIME_X_ORIGIN, 170, 144, 1));
+		
 		delay = slat_counter * 100;
 		slat_animations[slat_counter] = property_animation_create_layer_frame(
 			text_layer_get_layer(text_time_layers[slat_counter]), 
 			NULL, 
-			&GRect(0, TIME_Y_ORIGIN+slat_counter-slat_counter, 144, SLAT_COUNT)
+			&GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 144, 1)
 		);
 		animation_set_curve(property_animation_get_animation(slat_animations[slat_counter]), AnimationCurveEaseOut);
 		animation_set_delay(property_animation_get_animation(slat_animations[slat_counter]), 0 + delay);
@@ -77,7 +77,6 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 														slat_animations[slat_counter]);
 		animation_schedule(property_animation_get_animation(slat_animations[slat_counter]));	
 	}
-*/
 }
 
 
@@ -92,9 +91,9 @@ static void window_load(Window *window) {
 		//text_time_layers[slat_counter] = text_layer_create(GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 144, SLAT_COUNT));
 		text_time_layers[slat_counter] = text_layer_create(layer_get_frame(window_layer));
 		text_layer_set_font(text_time_layers[slat_counter], fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
-		text_layer_set_text_color(text_time_layers[slat_counter], GColorBlack);
+		text_layer_set_text_color(text_time_layers[slat_counter], GColorWhite);
 		text_layer_set_text_alignment(text_time_layers[slat_counter], GTextAlignmentCenter);
-		text_layer_set_background_color(text_time_layers[slat_counter], GColorWhite);
+		text_layer_set_background_color(text_time_layers[slat_counter], GColorClear);
 
 		//layer_set_bounds(text_layer_get_layer(text_time_layers[slat_counter]), GRect(0, 0, 144, SLAT_COUNT));
 		//layer_set_bounds(text_layer_get_layer(text_time_layers[slat_counter]), GRect(0, -slat_counter / 2, 144, SLAT_COUNT));
