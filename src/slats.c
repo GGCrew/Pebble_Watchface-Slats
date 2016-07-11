@@ -22,6 +22,37 @@ static TextLayer *text_time_layer;
 static PropertyAnimation *slat_animations[SLAT_COUNT];
 
 
+void text_time_layer_update_proc(Layer *layer, GContext *ctx)
+{
+	uint8_t text_color_ARGB8;
+	uint8_t background_color_ARGB8;
+	GRect layer_rect;
+	const char *time_text;
+	GFont time_font;
+	GRect time_rect = {{0, 45}, {144, 105}};
+
+	// Get required data
+	time_text = text_layer_get_text(text_time_layer);
+	time_font = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);	// This should be defined elsewhere
+
+	// Set background
+	background_color_ARGB8 = GColorBlackARGB8;
+	graphics_context_set_fill_color(ctx, (GColor8){.argb=background_color_ARGB8});
+	graphics_fill_rect(ctx, layer_rect, 0, GCornerNone);
+
+	// Set time text
+	text_color_ARGB8 = GColorWhiteARGB8;
+	graphics_context_set_text_color(ctx, (GColor8){.argb=text_color_ARGB8});
+	graphics_draw_text(ctx, 
+											time_text,
+											time_font,
+											time_rect,
+											GTextOverflowModeWordWrap,
+											GTextAlignmentCenter,
+											NULL);
+}
+
+
 void update_display_time(struct tm *tick_time) {
   // Need to be static because they're used by the system later.
   static char time_text[] = "00:00";
@@ -94,6 +125,7 @@ static void window_load(Window *window) {
 	text_layer_set_text_color(text_time_layer, GColorWhite);
 	text_layer_set_text_alignment(text_time_layer, GTextAlignmentCenter);
 	text_layer_set_background_color(text_time_layer, GColorClear);
+	layer_set_update_proc(text_layer_get_layer(text_time_layer), text_time_layer_update_proc);
 	layer_add_child(window_layer, text_layer_get_layer(text_time_layer));
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
