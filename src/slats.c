@@ -16,7 +16,7 @@ static Window *window;
 
 static TextLayer *text_time_layer;
 
-static Layer *slat_layers[SLAT_COUNT];
+//static Layer *slat_layers[SLAT_COUNT];
 
 static PropertyAnimation *slat_animations[SLAT_COUNT];
 
@@ -56,6 +56,7 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	update_display_time(tick_time);
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+	/*
 		// Move offscreen
 		layer_set_frame(slat_layers[slat_counter], GRect(TIME_X_ORIGIN, 170, 144, 1));
 
@@ -76,6 +77,7 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 														},
 														slat_animations[slat_counter]);
 		animation_schedule(property_animation_get_animation(slat_animations[slat_counter]));	
+	*/
 	}
 }
 
@@ -94,6 +96,7 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, text_layer_get_layer(text_time_layer));
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+	/*
 		slat_layers[slat_counter] = layer_create(layer_get_frame(window_layer));
 
 		// Create a new frame
@@ -101,6 +104,7 @@ static void window_load(Window *window) {
 		// Adjust the bounds to shift the layer's offset up
 		layer_add_child(window_layer, slat_layers[slat_counter]);
 		layer_set_frame(slat_layers[slat_counter], GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 144, 1));
+	*/
 	}
 }
 
@@ -111,7 +115,7 @@ static void window_unload(Window *window) {
 	text_layer_destroy(text_time_layer);
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		layer_destroy(slat_layers[slat_counter]);
+		//layer_destroy(slat_layers[slat_counter]);
 	}
 }
 
