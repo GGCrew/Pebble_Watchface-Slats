@@ -16,6 +16,7 @@ static Window *window;
 
 static TextLayer *text_time_layer;
 
+// Temporarily commented out to focus on setting & reading frame_buffer
 //static Layer *slat_layers[SLAT_COUNT];
 
 static PropertyAnimation *slat_animations[SLAT_COUNT];
@@ -56,7 +57,7 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	update_display_time(tick_time);
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-	/*
+	/*  Temporarily commented out to focus on setting & reading frame_buffer
 		// Move offscreen
 		layer_set_frame(slat_layers[slat_counter], GRect(TIME_X_ORIGIN, 170, 144, 1));
 
@@ -96,7 +97,7 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, text_layer_get_layer(text_time_layer));
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-	/*
+	/*  Temporarily commented out to focus on setting & reading frame_buffer
 		slat_layers[slat_counter] = layer_create(layer_get_frame(window_layer));
 
 		// Create a new frame
@@ -115,6 +116,7 @@ static void window_unload(Window *window) {
 	text_layer_destroy(text_time_layer);
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+		// Temporarily commented out to focus on setting & reading frame_buffer
 		//layer_destroy(slat_layers[slat_counter]);
 	}
 }
