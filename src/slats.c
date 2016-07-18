@@ -9,6 +9,7 @@
 #define SLAT_COUNT 64
 #define ANIMATION_DURATION 500
 
+
 /**/
 
 
@@ -17,19 +18,33 @@ static Window *window;
 static TextLayer *text_time_layer;
 
 // Temporarily commented out to focus on setting & reading frame_buffer
-//static Layer *slat_layers[SLAT_COUNT];
+static Layer *slat_layers[SLAT_COUNT];
+static GBitmap *slat_bitmaps[SLAT_COUNT];
 
 static PropertyAnimation *slat_animations[SLAT_COUNT];
 
 
+void slat_layer_update_proc(Layer *layer, GContext *ctx)
+{
+	graphics_draw_bitmap_in_rect(ctx, slat_bitmaps[SLAT_COUNT / 2], GRect(0,0,144,1));
+}
+
+
 void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 {
+	GBitmap *bitmap;
+	GBitmapFormat bitmap_format;
+	uint8_t *bitmap_data;
+	uint8_t bitmap_row_data[144];
+
 	uint8_t text_color_ARGB8;
 	uint8_t background_color_ARGB8;
 	GRect layer_rect;
 	const char *time_text;
 	GFont time_font;
 	GRect time_rect = {{0, 45}, {144, 105}};
+
+	int slat_counter;
 
 	// Get required data
 	time_text = text_layer_get_text(text_time_layer);
@@ -50,6 +65,23 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 											GTextOverflowModeWordWrap,
 											GTextAlignmentCenter,
 											NULL);
+
+	// Get buffer data (which also locks the buffer)
+	bitmap = graphics_capture_frame_buffer(ctx);
+	bitmap_format = gbitmap_get_format(bitmap);
+	bitmap_data = gbitmap_get_data(bitmap);
+
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "bitmap_format: %d", bitmap_format);
+
+	// Create slats
+	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+		// try gbitmap_create_as_sub_bitmap() instead of memcpy + gbitmap_create_with_data
+		memcpy(bitmap_row_data, bitmap_data + (slat_counter * 144), 144);
+		slat_bitmaps[slat_counter] = gbitmap_create_with_data(bitmap_row_data);
+	}
+
+	// Commit changes to buffer (if any) and unlock the buffer
+	graphics_release_frame_buffer(ctx, bitmap);	
 }
 
 
@@ -129,15 +161,13 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, text_layer_get_layer(text_time_layer));
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-	/*  Temporarily commented out to focus on setting & reading frame_buffer
 		slat_layers[slat_counter] = layer_create(layer_get_frame(window_layer));
 
 		// Create a new frame
 		// Set the frame dimensions to 1 pixel high
-		// Adjust the bounds to shift the layer's offset up
 		layer_add_child(window_layer, slat_layers[slat_counter]);
-		layer_set_frame(slat_layers[slat_counter], GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 144, 1));
-	*/
+		layer_set_frame(slat_layers[slat_counter], GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter + 64, 144, 1));
+		layer_set_update_proc(slat_layers[slat_counter], slat_layer_update_proc);
 	}
 }
 
@@ -148,8 +178,7 @@ static void window_unload(Window *window) {
 	text_layer_destroy(text_time_layer);
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		// Temporarily commented out to focus on setting & reading frame_buffer
-		//layer_destroy(slat_layers[slat_counter]);
+		layer_destroy(slat_layers[slat_counter]);
 	}
 }
 
