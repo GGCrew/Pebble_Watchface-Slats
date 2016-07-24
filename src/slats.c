@@ -16,11 +16,11 @@
 static Window *window;
 
 static TextLayer *text_time_layer;
-//static BitmapLayer *slat_layers[SLAT_COUNT];
+static BitmapLayer *slat_layers[SLAT_COUNT];
 static BitmapLayer *bitmap_time_layer;
 
 static GBitmap *time_bitmap;
-//static GBitmap *slat_bitmaps[SLAT_COUNT];
+static GBitmap *slat_bitmaps[SLAT_COUNT];
 
 //static PropertyAnimation *slat_animations[SLAT_COUNT];
 
@@ -51,7 +51,7 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	time_text = text_layer_get_text(text_time_layer);
 	time_font = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);	// This should be defined elsewhere
 
-	// Hide other layers
+//	// Hide other layers
 //	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 //		layer_set_hidden(bitmap_layer_get_layer(slat_layers[slat_counter]), true);
 //	}
@@ -105,10 +105,10 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	graphics_release_frame_buffer(ctx, bitmap);	
 
 	// Unhide other layers
-//	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 //		layer_set_hidden(bitmap_layer_get_layer(slat_layers[slat_counter]), false);
-//		layer_mark_dirty(bitmap_layer_get_layer(slat_layers[slat_counter]));
-//	}
+		layer_mark_dirty(bitmap_layer_get_layer(slat_layers[slat_counter]));
+	}
 }
 
 
@@ -195,18 +195,17 @@ static void window_load(Window *window) {
 	bitmap_format = GBitmapFormat1Bit;	// for Aplite
 	time_bitmap = gbitmap_create_blank(bitmap_size, bitmap_format);
 
-	bitmap_time_layer = bitmap_layer_create(GRect(0, 70, 144, 60));
+	bitmap_time_layer = bitmap_layer_create(GRect(0, 100, 144, 60));
 	bitmap_layer_set_bitmap(bitmap_time_layer, time_bitmap);
 	layer_add_child(window_layer, bitmap_layer_get_layer(bitmap_time_layer));
 
-/*
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_counter: %d", slat_counter);
 		
 		//slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(time_bitmap, GRect(0, slat_counter, 144, 1));
 
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "bitmap_layer_create...");
-		slat_layers[slat_counter] = bitmap_layer_create(GRect(0 + slat_counter, slat_counter + 60, 144, 1));
+		slat_layers[slat_counter] = bitmap_layer_create(GRect(0 + slat_counter, slat_counter + 50, 144, 1));
 
 		bitmap_frame = GRect(0, slat_counter, 144, 1);
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_create_as_sub_bitmap...");
@@ -222,7 +221,7 @@ static void window_load(Window *window) {
 		//layer_set_frame(bitmap_layer_get_layer(slat_layers[slat_counter]), GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter + 64, 144, 1));
 		//layer_set_update_proc(slat_layers[slat_counter], slat_layer_update_proc);
 	}
-*/
+
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "window_load complete!");
 }
 
@@ -234,13 +233,14 @@ static void window_unload(Window *window) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "text_layer_destroy(text_time_layer)...");
 	text_layer_destroy(text_time_layer);
 
-/*
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "bitmap_layer_destroy(bitmap_time_layer)...");
+	bitmap_layer_destroy(bitmap_time_layer);
+
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_counter: %d", slat_counter);
 		gbitmap_destroy(slat_bitmaps[slat_counter]);
 		layer_destroy(bitmap_layer_get_layer(slat_layers[slat_counter]));
 	}
-*/
 
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_destroy(time_bitmap)...");
 	gbitmap_destroy(time_bitmap);
