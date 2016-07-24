@@ -16,12 +16,13 @@
 static Window *window;
 
 static TextLayer *text_time_layer;
-static BitmapLayer *slat_layers[SLAT_COUNT];
+//static BitmapLayer *slat_layers[SLAT_COUNT];
+static BitmapLayer *bitmap_time_layer;
 
 static GBitmap *time_bitmap;
-static GBitmap *slat_bitmaps[SLAT_COUNT];
+//static GBitmap *slat_bitmaps[SLAT_COUNT];
 
-static PropertyAnimation *slat_animations[SLAT_COUNT];
+//static PropertyAnimation *slat_animations[SLAT_COUNT];
 
 
 //void slat_layer_update_proc(Layer *layer, GContext *ctx)
@@ -51,9 +52,9 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	time_font = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);	// This should be defined elsewhere
 
 	// Hide other layers
-	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		layer_set_hidden(bitmap_layer_get_layer(slat_layers[slat_counter]), true);
-	}
+//	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+//		layer_set_hidden(bitmap_layer_get_layer(slat_layers[slat_counter]), true);
+//	}
 
 	// Set background
 	background_color_ARGB8 = GColorWhiteARGB8;
@@ -76,7 +77,7 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	bitmap_format = gbitmap_get_format(bitmap);
 	bitmap_data = gbitmap_get_data(bitmap);
 
-	gbitmap_set_data(time_bitmap, bitmap_data, bitmap_format, 144, false);
+	gbitmap_set_data(time_bitmap, bitmap_data, bitmap_format, 20, false);
 
 //	APP_LOG(APP_LOG_LEVEL_DEBUG, "bitmap_format: %d", bitmap_format);
 
@@ -96,9 +97,10 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	graphics_release_frame_buffer(ctx, bitmap);	
 
 	// Unhide other layers
-	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		layer_set_hidden(bitmap_layer_get_layer(slat_layers[slat_counter]), false);
-	}
+//	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+//		layer_set_hidden(bitmap_layer_get_layer(slat_layers[slat_counter]), false);
+//		layer_mark_dirty(bitmap_layer_get_layer(slat_layers[slat_counter]));
+//	}
 }
 
 
@@ -125,9 +127,9 @@ void update_display_time(struct tm *tick_time) {
 }
 
 
-void animation_stopped(Animation *animation, bool finished, void *property_animation) {
-	if(finished){property_animation_destroy(property_animation);}
-}
+//void animation_stopped(Animation *animation, bool finished, void *property_animation) {
+//	if(finished){property_animation_destroy(property_animation);}
+//}
 
 
 void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
@@ -136,8 +138,8 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	
 	update_display_time(tick_time);
 
-	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 	/*  Temporarily commented out to focus on setting & reading frame_buffer
+	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		// Move offscreen
 		layer_set_frame(slat_layers[slat_counter], GRect(TIME_X_ORIGIN, 170, 144, 1));
 
@@ -158,8 +160,8 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 														},
 														slat_animations[slat_counter]);
 		animation_schedule(property_animation_get_animation(slat_animations[slat_counter]));	
-	*/
 	}
+	*/
 }
 
 
@@ -185,6 +187,11 @@ static void window_load(Window *window) {
 	bitmap_format = GBitmapFormat1Bit;	// for Aplite
 	time_bitmap = gbitmap_create_blank(bitmap_size, bitmap_format);
 
+	bitmap_time_layer = bitmap_layer_create(GRect(0, 70, 144, 60));
+	bitmap_layer_set_bitmap(bitmap_time_layer, time_bitmap);
+	layer_add_child(window_layer, bitmap_layer_get_layer(bitmap_time_layer));
+
+/*
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_counter: %d", slat_counter);
 		
@@ -207,6 +214,7 @@ static void window_load(Window *window) {
 		//layer_set_frame(bitmap_layer_get_layer(slat_layers[slat_counter]), GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter + 64, 144, 1));
 		//layer_set_update_proc(slat_layers[slat_counter], slat_layer_update_proc);
 	}
+*/
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "window_load complete!");
 }
 
@@ -218,11 +226,13 @@ static void window_unload(Window *window) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "text_layer_destroy(text_time_layer)...");
 	text_layer_destroy(text_time_layer);
 
+/*
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_counter: %d", slat_counter);
 		gbitmap_destroy(slat_bitmaps[slat_counter]);
 		layer_destroy(bitmap_layer_get_layer(slat_layers[slat_counter]));
 	}
+*/
 
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_destroy(time_bitmap)...");
 	gbitmap_destroy(time_bitmap);
