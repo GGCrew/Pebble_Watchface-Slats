@@ -77,6 +77,14 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	bitmap_format = gbitmap_get_format(bitmap);
 	bitmap_data = gbitmap_get_data(bitmap);
 
+	// Best guess on origin of "20" value in following gbitmap_set_data() function:
+	//  The row is 144 pixels wide.
+	//  Because I'm developing/testing for Aplite (aka original Pebble), each pixel is represented by 1 bit.
+	//  The "row_size" value must be in bytes.
+	//  8 bits = 1 byte.
+	//  144 bits = 18 bytes.
+	//  The "row_size" value must be a multiple of 4.
+	//  18 rounded up to the nearest multiple of 4 = 20.
 	gbitmap_set_data(time_bitmap, bitmap_data, bitmap_format, 20, false);
 
 //	APP_LOG(APP_LOG_LEVEL_DEBUG, "bitmap_format: %d", bitmap_format);
