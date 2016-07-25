@@ -7,7 +7,8 @@
 #define TIME_X_ORIGIN 0
 #define TIME_Y_ORIGIN 50
 #define SLAT_COUNT 64
-#define ANIMATION_DURATION 500
+#define ANIMATION_DURATION 1000
+#define ANIMATION_DELAY 10
 
 
 /**/
@@ -22,7 +23,7 @@ static BitmapLayer *bitmap_time_layer;
 static GBitmap *time_bitmap;
 static GBitmap *slat_bitmaps[SLAT_COUNT];
 
-//static PropertyAnimation *slat_animations[SLAT_COUNT];
+static PropertyAnimation *slat_animations[SLAT_COUNT * 2];
 
 
 void text_time_layer_update_proc(Layer *layer, GContext *ctx)
@@ -76,7 +77,7 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	//  The "row_size" value must be in bytes.
 	//  8 bits = 1 byte.
 	//  144 bits = 18 bytes.
-	//  The "row_size" value must be a multiple of 4.
+	//  The "row_size" byte value must be a multiple of 4.
 	//  18 rounded up to the nearest multiple of 4 = 20.
 	gbitmap_set_data(time_bitmap, bitmap_data, bitmap_format, 20, false);
 
@@ -126,41 +127,53 @@ void update_display_time(struct tm *tick_time) {
 }
 
 
-//void animation_stopped(Animation *animation, bool finished, void *property_animation) {
-//	if(finished){property_animation_destroy(property_animation);}
-//}
+void animation_stopped(Animation *animation, bool finished, void *property_animation) {
+	if(finished){property_animation_destroy(property_animation);}
+}
 
 
 void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	int slat_counter;
+	int animation_counter;
 	int delay;
+	int start_position_x_offset;
+
+	GRect start_position;
+	GRect stop_position;
+
+	/**/
 	
 	update_display_time(tick_time);
 
-	/*  Temporarily commented out to focus on setting & reading frame_buffer
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		// Move offscreen
-		layer_set_frame(slat_layers[slat_counter], GRect(TIME_X_ORIGIN, 170, 144, 1));
+		layer_set_frame(bitmap_layer_get_layer(slat_layers[slat_counter]), GRect(144, TIME_Y_ORIGIN + slat_counter, 144, 1));
 
 		// Animate slats
-		delay = slat_counter * 100;
-		slat_animations[slat_counter] = property_animation_create_layer_frame(
-			slat_layers[slat_counter], 
-			NULL, 
-			&GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN+slat_counter, 144, 1)
+		start_position_x_offset = (((slat_counter & 1) == 1) ? 144 : -144);
+		start_position = GRect(start_position_x_offset, TIME_Y_ORIGIN + slat_counter, 144, 1);
+		stop_position = GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN + slat_counter, 144, 1);
+		
+		// Slide in
+		delay = slat_counter * ANIMATION_DELAY;
+		animation_counter = slat_counter;
+		slat_animations[animation_counter] = property_animation_create_layer_frame(
+			bitmap_layer_get_layer(slat_layers[slat_counter]), 
+			&start_position, 
+			&stop_position
 		);
-		animation_set_curve(property_animation_get_animation(slat_animations[slat_counter]), AnimationCurveEaseOut);
-		animation_set_delay(property_animation_get_animation(slat_animations[slat_counter]), 0 + delay);
-		animation_set_duration(property_animation_get_animation(slat_animations[slat_counter]), ANIMATION_DURATION);
-		animation_set_handlers(property_animation_get_animation(slat_animations[slat_counter]), 
+		animation_set_curve(property_animation_get_animation(slat_animations[animation_counter]), AnimationCurveEaseOut);
+		animation_set_delay(property_animation_get_animation(slat_animations[animation_counter]), 0 + delay);
+		animation_set_duration(property_animation_get_animation(slat_animations[animation_counter]), ANIMATION_DURATION);
+		animation_set_handlers(property_animation_get_animation(slat_animations[animation_counter]), 
 														(AnimationHandlers) {
 															.started = NULL,
 															.stopped = (AnimationStoppedHandler) animation_stopped,
 														},
-														slat_animations[slat_counter]);
-		animation_schedule(property_animation_get_animation(slat_animations[slat_counter]));	
+														slat_animations[animation_counter]);
+		animation_schedule(property_animation_get_animation(slat_animations[animation_counter]));
+
 	}
-	*/
 }
 
 
@@ -185,12 +198,12 @@ static void window_load(Window *window) {
 	bitmap_format = GBitmapFormat1Bit;	// for Aplite
 	time_bitmap = gbitmap_create_blank(bitmap_size, bitmap_format);
 
-	bitmap_time_layer = bitmap_layer_create(GRect(0, 100, 144, 60));
+	bitmap_time_layer = bitmap_layer_create(GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN * 2, 144, 60));
 	bitmap_layer_set_bitmap(bitmap_time_layer, time_bitmap);
 	layer_add_child(window_layer, bitmap_layer_get_layer(bitmap_time_layer));
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		slat_layers[slat_counter] = bitmap_layer_create(GRect(0 + slat_counter, slat_counter + 50, 144, 1));
+		slat_layers[slat_counter] = bitmap_layer_create(GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN + slat_counter, 144, 1));
 
 		slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(time_bitmap, GRect(0, slat_counter, 144, 1));
 
