@@ -27,10 +27,10 @@ static PropertyAnimation *slat_animations[SLAT_COUNT * 2];
 
 void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 {
-	GBitmap *bitmap;
-	GBitmapFormat bitmap_format;
-	uint8_t *bitmap_data;
-	uint16_t bitmap_row_size;
+	GBitmap *screen_bitmap;
+	GBitmapFormat screen_bitmap_format;
+	uint8_t *screen_bitmap_data;
+	uint16_t screen_bitmap_row_size;
 
 	uint8_t text_color_ARGB8;
 	uint8_t background_color_ARGB8;
@@ -67,22 +67,13 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 											NULL);
 
 	// Get buffer data (which also locks the buffer)
-	bitmap = graphics_capture_frame_buffer(ctx);
-	bitmap_format = gbitmap_get_format(bitmap);
-	bitmap_data = gbitmap_get_data(bitmap);
-	bitmap_row_size = gbitmap_get_bytes_per_row(bitmap);
+	screen_bitmap = graphics_capture_frame_buffer(ctx);
+	screen_bitmap_format = gbitmap_get_format(screen_bitmap);
+	screen_bitmap_data = gbitmap_get_data(screen_bitmap);
+	screen_bitmap_row_size = gbitmap_get_bytes_per_row(screen_bitmap);
 
 	// TODO: memcpy() from bitmap_data to static bitmap object (which also needs to be coded)
-	
-	// Best guess on origin of "20" value in following gbitmap_set_data() function:
-	//  The row is 144 pixels wide.
-	//  Because I'm developing/testing for Aplite (aka original Pebble), each pixel is represented by 1 bit.
-	//  The "row_size" value must be in bytes.
-	//  8 bits = 1 byte.
-	//  144 bits = 18 bytes.
-	//  The "row_size" byte value must be a multiple of 4.
-	//  18 rounded up to the nearest multiple of 4 = 20.
-	gbitmap_set_data(time_bitmap, bitmap_data, bitmap_format, bitmap_row_size, false);
+	gbitmap_set_data(time_bitmap, screen_bitmap_data, screen_bitmap_format, screen_bitmap_row_size, false);
 
 	// Update slat bitmaps
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
@@ -96,7 +87,7 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	}
 
 	// Commit changes to buffer (if any) and unlock the buffer
-	graphics_release_frame_buffer(ctx, bitmap);
+	graphics_release_frame_buffer(ctx, screen_bitmap);
 
 	// Unhide other layers
 //	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
