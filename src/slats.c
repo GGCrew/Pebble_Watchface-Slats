@@ -32,6 +32,10 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	uint8_t *screen_bitmap_data;
 	uint16_t screen_bitmap_row_size;
 
+	GBitmapFormat time_bitmap_format;
+	uint8_t *time_bitmap_data;
+	uint16_t time_bitmap_row_size;
+
 	uint8_t text_color_ARGB8;
 	uint8_t background_color_ARGB8;
 	GRect layer_rect = {{0, 0}, {144, 168}};;
@@ -68,12 +72,17 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 
 	// Get buffer data (which also locks the buffer)
 	screen_bitmap = graphics_capture_frame_buffer(ctx);
-	screen_bitmap_format = gbitmap_get_format(screen_bitmap);
 	screen_bitmap_data = gbitmap_get_data(screen_bitmap);
+	//screen_bitmap_format = gbitmap_get_format(screen_bitmap);
 	screen_bitmap_row_size = gbitmap_get_bytes_per_row(screen_bitmap);
 
 	// TODO: memcpy() from bitmap_data to static bitmap object (which also needs to be coded)
-	gbitmap_set_data(time_bitmap, screen_bitmap_data, screen_bitmap_format, screen_bitmap_row_size, false);
+	//gbitmap_set_data(time_bitmap, screen_bitmap_data, screen_bitmap_format, screen_bitmap_row_size, false);
+	time_bitmap_data = gbitmap_get_data(time_bitmap);
+	//time_bitmap_format = gbitmap_get_format(time_bitmap);
+	//time_bitmap_row_size = gbitmap_get_bytes_per_row(time_bitmap);
+	
+	memcpy(time_bitmap_data, screen_bitmap_data, screen_bitmap_row_size * 60);
 
 	// Update slat bitmaps
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
@@ -88,6 +97,7 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 
 	// Commit changes to buffer (if any) and unlock the buffer
 	graphics_release_frame_buffer(ctx, screen_bitmap);
+	layer_set_hidden(layer, true);
 
 	// Unhide other layers
 //	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
@@ -117,6 +127,7 @@ void update_display_time(struct tm *tick_time) {
     memmove(time_text, &time_text[1], sizeof(time_text) - 1);
   }
 
+	layer_set_hidden(text_layer_get_layer(text_time_layer), false);
 	text_layer_set_text(text_time_layer, time_text);
 }
 
