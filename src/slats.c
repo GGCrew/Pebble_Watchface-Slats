@@ -30,6 +30,7 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	GBitmap *bitmap;
 	GBitmapFormat bitmap_format;
 	uint8_t *bitmap_data;
+	uint16_t bitmap_row_size;
 
 	uint8_t text_color_ARGB8;
 	uint8_t background_color_ARGB8;
@@ -69,7 +70,10 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	bitmap = graphics_capture_frame_buffer(ctx);
 	bitmap_format = gbitmap_get_format(bitmap);
 	bitmap_data = gbitmap_get_data(bitmap);
+	bitmap_row_size = gbitmap_get_bytes_per_row(bitmap);
 
+	// TODO: memcpy() from bitmap_data to static bitmap object (which also needs to be coded)
+	
 	// Best guess on origin of "20" value in following gbitmap_set_data() function:
 	//  The row is 144 pixels wide.
 	//  Because I'm developing/testing for Aplite (aka original Pebble), each pixel is represented by 1 bit.
@@ -78,7 +82,7 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	//  144 bits = 18 bytes.
 	//  The "row_size" byte value must be a multiple of 4.
 	//  18 rounded up to the nearest multiple of 4 = 20.
-	gbitmap_set_data(time_bitmap, bitmap_data, bitmap_format, 20, false);
+	gbitmap_set_data(time_bitmap, bitmap_data, bitmap_format, bitmap_row_size, false);
 
 	// Update slat bitmaps
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
