@@ -2,3 +2,11 @@
 
 build/
 
+# Ignore Windows thumbnail files
+/**/Thumbs.db
+
+# Ignore gedit temp file
+/**/*.*~
+/**/*~
+/*.*~
+/*~
