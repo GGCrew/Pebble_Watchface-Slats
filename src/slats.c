@@ -28,13 +28,13 @@ static PropertyAnimation *slat_animations[SLAT_COUNT * 2];
 void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 {
 	GBitmap *screen_bitmap;
-	//GBitmapFormat screen_bitmap_format;
+	GBitmapFormat screen_bitmap_format;
 	uint8_t *screen_bitmap_data;
 	uint16_t screen_bitmap_row_size;
 
-	//GBitmapFormat time_bitmap_format;
+	GBitmapFormat time_bitmap_format;
 	uint8_t *time_bitmap_data;
-	//uint16_t time_bitmap_row_size;
+	uint16_t time_bitmap_row_size;
 
 	uint8_t text_color_ARGB8;
 	uint8_t background_color_ARGB8;
@@ -44,7 +44,24 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 
 	int slat_counter;
 
-	// Get required data
+	// Get buffer data (which also locks the buffer)
+	screen_bitmap = graphics_capture_frame_buffer(ctx);
+	screen_bitmap_data = gbitmap_get_data(screen_bitmap);
+	screen_bitmap_format = gbitmap_get_format(screen_bitmap);
+	screen_bitmap_row_size = gbitmap_get_bytes_per_row(screen_bitmap);
+	// Unlock the buffer
+	graphics_release_frame_buffer(ctx, screen_bitmap);
+
+	// Get time bitmap data
+	time_bitmap_data = gbitmap_get_data(time_bitmap);
+	time_bitmap_format = gbitmap_get_format(time_bitmap);
+	time_bitmap_row_size = gbitmap_get_bytes_per_row(time_bitmap);
+
+	// Point the screen bitmap (aka frame buffer) to the time bitmap (so we can render "offscreen")
+	// This trick pulled from 2015 Pebble Developer Retreat presentation on Graphics by Matthew Hungerford
+	gbitmap_set_data(screen_bitmap, time_bitmap_data, time_bitmap_format, time_bitmap_row_size, false);
+
+	// Get text data
 	time_text = text_layer_get_text(text_time_layer);
 	time_font = fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49);	// This should be defined elsewhere
 
@@ -53,7 +70,7 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 	graphics_context_set_fill_color(ctx, (GColor8){.argb=background_color_ARGB8});
 	graphics_fill_rect(ctx, time_rect, 0, GCornerNone);
 
-	// Set time text
+	// Render text
 	text_color_ARGB8 = GColorWhiteARGB8;
 	graphics_context_set_text_color(ctx, (GColor8){.argb=text_color_ARGB8});
 	graphics_draw_text(ctx, 
@@ -64,27 +81,13 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 											GTextAlignmentCenter,
 											NULL);
 
-	// Get buffer data (which also locks the buffer)
-	screen_bitmap = graphics_capture_frame_buffer(ctx);
-	screen_bitmap_data = gbitmap_get_data(screen_bitmap);
-	//screen_bitmap_format = gbitmap_get_format(screen_bitmap);
-	screen_bitmap_row_size = gbitmap_get_bytes_per_row(screen_bitmap);
 
-	time_bitmap_data = gbitmap_get_data(time_bitmap);
-	//time_bitmap_format = gbitmap_get_format(time_bitmap);
-	//time_bitmap_row_size = gbitmap_get_bytes_per_row(time_bitmap);
-
-	// TODO: compare bitmap_formats and bitmap_row_sizes before executing memcpy()
-	memcpy(time_bitmap_data, screen_bitmap_data, screen_bitmap_row_size * SLAT_COUNT);
-
-	// Commit changes to buffer (if any) and unlock the buffer
-	graphics_release_frame_buffer(ctx, screen_bitmap);
-
-	// Hide this layer -- we don't actually want to see it!
-	layer_set_hidden(layer, true);
-
+	// Point the screen bitmap (aka frame buffer) back to it's original data
+	gbitmap_set_data(screen_bitmap, screen_bitmap_data, screen_bitmap_format, screen_bitmap_row_size, false);
+	
 	// Update slat bitmaps
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+		// Could use memcpy() here instead of destroy/create ???
 		gbitmap_destroy(slat_bitmaps[slat_counter]);
 		slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(time_bitmap, GRect(0, slat_counter, 144, 1));
 		bitmap_layer_set_bitmap(slat_layers[slat_counter], slat_bitmaps[slat_counter]);
@@ -112,7 +115,6 @@ void update_display_time(struct tm *tick_time) {
     memmove(time_text, &time_text[1], sizeof(time_text) - 1);
   }
 
-	layer_set_hidden(text_layer_get_layer(text_time_layer), false);
 	text_layer_set_text(text_time_layer, time_text);
 }
 
