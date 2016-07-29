@@ -25,41 +25,18 @@ static GBitmap *slat_bitmaps[SLAT_COUNT];
 static PropertyAnimation *slat_animations[SLAT_COUNT * 2];
 
 
-void text_time_layer_update_proc(Layer *layer, GContext *ctx)
-{
-	GBitmap *screen_bitmap;
-	GBitmapFormat screen_bitmap_format;
-	uint8_t *screen_bitmap_data;
-	uint16_t screen_bitmap_row_size;
+/**/
 
-	GBitmapFormat time_bitmap_format;
-	uint8_t *time_bitmap_data;
-	uint16_t time_bitmap_row_size;
 
-	uint8_t text_color_ARGB8;
-	uint8_t background_color_ARGB8;
+void update_time_bitmap(GContext *ctx) {
 	const char *time_text;
 	GFont time_font;
 	GRect time_rect = {{0, 0}, {144, SLAT_COUNT}};
 
-	int slat_counter;
+	uint8_t text_color_ARGB8;
+	uint8_t background_color_ARGB8;
 
-	// Get buffer data (which also locks the buffer)
-	screen_bitmap = graphics_capture_frame_buffer(ctx);
-	screen_bitmap_data = gbitmap_get_data(screen_bitmap);
-	screen_bitmap_format = gbitmap_get_format(screen_bitmap);
-	screen_bitmap_row_size = gbitmap_get_bytes_per_row(screen_bitmap);
-	// Unlock the buffer
-	graphics_release_frame_buffer(ctx, screen_bitmap);
-
-	// Get time bitmap data
-	time_bitmap_data = gbitmap_get_data(time_bitmap);
-	time_bitmap_format = gbitmap_get_format(time_bitmap);
-	time_bitmap_row_size = gbitmap_get_bytes_per_row(time_bitmap);
-
-	// Point the screen bitmap (aka frame buffer) to the time bitmap (so we can render "offscreen")
-	// This trick pulled from 2015 Pebble Developer Retreat presentation on Graphics by Matthew Hungerford
-	gbitmap_set_data(screen_bitmap, time_bitmap_data, time_bitmap_format, time_bitmap_row_size, false);
+	/**/
 
 	// Get text data
 	time_text = text_layer_get_text(text_time_layer);
@@ -80,19 +57,59 @@ void text_time_layer_update_proc(Layer *layer, GContext *ctx)
 											GTextOverflowModeWordWrap,
 											GTextAlignmentCenter,
 											NULL);
+}
 
 
-	// Point the screen bitmap (aka frame buffer) back to it's original data
-	gbitmap_set_data(screen_bitmap, screen_bitmap_data, screen_bitmap_format, screen_bitmap_row_size, false);
-	
-	// Update slat bitmaps
+void update_slat_bitmaps() {
+	int slat_counter;
+
+	/**/
+
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		// Could use memcpy() here instead of destroy/create ???
 		gbitmap_destroy(slat_bitmaps[slat_counter]);
 		slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(time_bitmap, GRect(0, slat_counter, 144, 1));
 		bitmap_layer_set_bitmap(slat_layers[slat_counter], slat_bitmaps[slat_counter]);
 	}
+}
 
+
+void text_time_layer_update_proc(Layer *layer, GContext *ctx)
+{
+	GBitmap *screen_bitmap;
+	GBitmapFormat screen_bitmap_format;
+	uint8_t *screen_bitmap_data;
+	uint16_t screen_bitmap_row_size;
+
+	GBitmapFormat time_bitmap_format;
+	uint8_t *time_bitmap_data;
+	uint16_t time_bitmap_row_size;
+
+	/**/
+
+	// Get buffer data (which also locks the buffer)
+	screen_bitmap = graphics_capture_frame_buffer(ctx);
+	screen_bitmap_data = gbitmap_get_data(screen_bitmap);
+	screen_bitmap_format = gbitmap_get_format(screen_bitmap);
+	screen_bitmap_row_size = gbitmap_get_bytes_per_row(screen_bitmap);
+	// Unlock the buffer
+	graphics_release_frame_buffer(ctx, screen_bitmap);
+
+	// Get time bitmap data
+	time_bitmap_data = gbitmap_get_data(time_bitmap);
+	time_bitmap_format = gbitmap_get_format(time_bitmap);
+	time_bitmap_row_size = gbitmap_get_bytes_per_row(time_bitmap);
+
+	// Point the screen bitmap (aka frame buffer) to the time bitmap (so we can render "offscreen")
+	// This trick pulled from 2015 Pebble Developer Retreat presentation on Graphics by Matthew Hungerford
+	gbitmap_set_data(screen_bitmap, time_bitmap_data, time_bitmap_format, time_bitmap_row_size, false);
+
+	update_time_bitmap(ctx);
+
+	// Point the screen bitmap (aka frame buffer) back to it's original data
+	gbitmap_set_data(screen_bitmap, screen_bitmap_data, screen_bitmap_format, screen_bitmap_row_size, false);
+
+	update_slat_bitmaps();
 }
 
 
@@ -100,6 +117,8 @@ void update_display_time(struct tm *tick_time) {
   // Need to be static because they're used by the system later.
   static char time_text[] = "00:00";
   char *time_format;
+
+	/**/
 
   if (clock_is_24h_style()) {
     time_format = "%R";
@@ -119,12 +138,12 @@ void update_display_time(struct tm *tick_time) {
 }
 
 
-void animation_stopped(Animation *animation, bool finished, void *property_animation) {
+void slat_animation_stopped(Animation *animation, bool finished, void *property_animation) {
 	if(finished){property_animation_destroy(property_animation);}
 }
 
 
-void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
+void animate_slats() {
 	int slat_counter;
 	int animation_counter;
 	int delay;
@@ -135,8 +154,6 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 	/**/
 	
-	update_display_time(tick_time);
-
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		// Move offscreen
 		layer_set_frame(bitmap_layer_get_layer(slat_layers[slat_counter]), GRect(144, TIME_Y_ORIGIN + slat_counter, 144, 1));
@@ -160,11 +177,17 @@ void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 		animation_set_handlers(property_animation_get_animation(slat_animations[animation_counter]), 
 														(AnimationHandlers) {
 															.started = NULL,
-															.stopped = (AnimationStoppedHandler) animation_stopped,
+															.stopped = (AnimationStoppedHandler) slat_animation_stopped,
 														},
 														slat_animations[animation_counter]);
 		animation_schedule(property_animation_get_animation(slat_animations[animation_counter]));
 	}
+}
+
+
+void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
+	update_display_time(tick_time);
+	animate_slats();
 }
 
 
@@ -176,6 +199,8 @@ static void window_load(Window *window) {
 
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
+
+	/**/
 
 	text_time_layer = text_layer_create(bounds);
 	text_layer_set_font(text_time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
@@ -191,11 +216,8 @@ static void window_load(Window *window) {
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		slat_layers[slat_counter] = bitmap_layer_create(GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN + slat_counter, 144, 1));
-
 		slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(time_bitmap, GRect(0, slat_counter, 144, 1));
-
 		bitmap_layer_set_bitmap(slat_layers[slat_counter], slat_bitmaps[slat_counter]);
-
 		layer_add_child(window_layer, bitmap_layer_get_layer(slat_layers[slat_counter]));
 	}
 
@@ -206,6 +228,8 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "window_unload...");
 	int slat_counter;
+
+	/**/
 
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "text_layer_destroy(text_time_layer)...");
 	text_layer_destroy(text_time_layer);
