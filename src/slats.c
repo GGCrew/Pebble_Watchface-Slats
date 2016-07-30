@@ -21,6 +21,10 @@ typedef struct {
 	PropertyAnimation *slat_animations[SLAT_COUNT];
 } SlatObject;
 
+
+/**/
+
+
 static Window *window;
 
 static TextLayer *text_time_layer;
