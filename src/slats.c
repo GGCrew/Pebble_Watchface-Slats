@@ -24,12 +24,6 @@ typedef struct {
 static Window *window;
 
 static TextLayer *text_time_layer;
-//static BitmapLayer *slat_layers[SLAT_COUNT];
-
-//static GBitmap *time_bitmap;
-//static GBitmap *slat_bitmaps[SLAT_COUNT];
-
-//static PropertyAnimation *slat_animations[SLAT_COUNT];
 
 static SlatObject slat_object;
 
