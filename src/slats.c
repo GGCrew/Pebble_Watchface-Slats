@@ -1,5 +1,4 @@
 #include <pebble.h>
-#include "constants.h"
 #include "slat_object.h"
 
 

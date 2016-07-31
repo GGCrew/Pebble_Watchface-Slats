@@ -1,5 +1,13 @@
-#include "constants.h"
 #include "slat_object.h"
+
+
+/**/
+
+
+#define TIME_X_ORIGIN 0
+#define TIME_Y_ORIGIN 50
+#define ANIMATION_DURATION 1000
+#define ANIMATION_DELAY 10
 
 
 /**/

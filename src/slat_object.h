@@ -22,6 +22,7 @@ typedef struct {
 
 
 SlatObject* slat_object_create();
+
 void slat_object_destroy(SlatObject *slat_object);
 void slat_object_update_time(SlatObject *slat_object, TextLayer *time_text_layer, GContext *ctx);
 void slat_object_animate(SlatObject *slat_object);
