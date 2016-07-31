@@ -23,9 +23,9 @@ typedef struct {
 
 SlatObject* slat_object_create();
 void slat_object_destroy(SlatObject *slat_object);
+void slat_object_update_time(SlatObject *slat_object, TextLayer *time_text_layer, GContext *ctx);
+void slat_object_animate(SlatObject *slat_object);
 
 void layer_add_slat_object(Layer *layer, SlatObject *slat_object);
 
-void update_slat_bitmaps(SlatObject *slat_object);
-void animate_slats(SlatObject *slat_object);
 
