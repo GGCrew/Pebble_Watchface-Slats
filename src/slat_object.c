@@ -134,7 +134,7 @@ void slat_object_animate(SlatObject *slat_object) {
 	
 	for(slat_counter = 0; slat_counter < slat_object->rect.size.h; slat_counter++) {
 		// Move offscreen to hide the slat until the scheduled animation kicks in
-		layer_set_frame(bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]), GRect(144, TIME_Y_ORIGIN + slat_counter, 144, 1));
+		layer_set_frame(bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]), GRect(144, TIME_Y_ORIGIN + slat_counter, slat_object->rect.size.w, 1));
 
 		// Animate slats
 		start_position_x_offset = (((slat_counter & 1) == 1) ? 144 : -slat_object->rect.size.w);  // Interleave effect
@@ -204,7 +204,7 @@ void slat_object_set_slat_bitmaps(SlatObject *slat_object) {
 	for(slat_counter = 0; slat_counter < slat_object->rect.size.h; slat_counter++) {
 		// Could use memcpy() here instead of destroy/create ???
 		gbitmap_destroy(slat_object->slat_bitmaps[slat_counter]);
-		slat_object->slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->text_bitmap, GRect(slat_object->rect.origin.x, slat_counter, slat_object->rect.size.w, 1));
+		slat_object->slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->text_bitmap, GRect(0, slat_counter, slat_object->rect.size.w, 1));
 		bitmap_layer_set_bitmap(slat_object->slat_layers[slat_counter], slat_object->slat_bitmaps[slat_counter]);
 	}
 }
