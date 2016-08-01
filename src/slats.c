@@ -67,12 +67,12 @@ static void window_load(Window *window) {
 	layer_set_update_proc(text_layer_get_layer(time_text_layer), time_text_layer_update_proc);
 	layer_add_child(window_layer, text_layer_get_layer(time_text_layer));
 
-	slat_object = slat_object_create();
+	slat_object = slat_object_create((GRect){{0, 0}, {144, MAX_SLAT_COUNT}});
 	slat_object_set_font(slat_object, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
 	slat_object_set_text_alignment(slat_object, GTextAlignmentCenter);
 	slat_object_set_text_color(slat_object, GColorWhite);
 	slat_object_set_background_color(slat_object, GColorBlack);
-	slat_object_set_size(slat_object, (GSize){144, SLAT_COUNT});
+	//slat_object_set_size(slat_object, (GSize){144, SLAT_COUNT});
 	slat_object_set_overflow_mode(slat_object, GTextOverflowModeWordWrap);
 	layer_add_slat_object(window_layer, slat_object);
 }

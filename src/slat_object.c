@@ -25,22 +25,22 @@ void slat_animation_stopped(Animation *animation, bool finished, void *property_
 
 // Public functions declared in "slat_object.h"
 
-SlatObject* slat_object_create() {
+SlatObject* slat_object_create(GRect rect) {
 	int slat_counter;
-	GSize bitmap_size;
+	//GSize bitmap_size;
 	GBitmapFormat bitmap_format;
 	
 	SlatObject *slat_object = malloc(sizeof(SlatObject));
 
 	/**/
-	
-	bitmap_size = GSize(144, SLAT_COUNT);
-	bitmap_format = GBitmapFormat1Bit;	// for Aplite
-	slat_object->text_bitmap = gbitmap_create_blank(bitmap_size, bitmap_format);
 
-	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		slat_object->slat_layers[slat_counter] = bitmap_layer_create(GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN + slat_counter, 144, 1));
-		slat_object->slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->text_bitmap, GRect(0, slat_counter, 144, 1));
+	slat_object->rect = rect;
+	bitmap_format = GBitmapFormat1Bit;	// for Aplite
+	slat_object->text_bitmap = gbitmap_create_blank(slat_object->rect.size, bitmap_format);
+
+	for(slat_counter = 0; slat_counter < slat_object->rect.size.h; slat_counter++) {
+		slat_object->slat_layers[slat_counter] = bitmap_layer_create(GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN + slat_counter, slat_object->rect.size.w, 1));
+		slat_object->slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->text_bitmap, GRect(slat_object->rect.origin.x, slat_counter, slat_object->rect.size.w, 1));
 		bitmap_layer_set_bitmap(slat_object->slat_layers[slat_counter], slat_object->slat_bitmaps[slat_counter]);
 	}
 	
@@ -54,7 +54,7 @@ void slat_object_destroy(SlatObject *slat_object) {
 
 	/**/
 
-	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+	for(slat_counter = 0; slat_counter < slat_object->rect.size.h; slat_counter++) {
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_counter: %d", slat_counter);
 		gbitmap_destroy(slat_object->slat_bitmaps[slat_counter]);
 		layer_destroy(bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]));
@@ -79,8 +79,9 @@ void slat_object_set_font(SlatObject *slat_object, GFont font) {slat_object->fon
 void slat_object_set_text_alignment(SlatObject *slat_object, GTextAlignment text_alignment) {slat_object->text_alignment = text_alignment;}
 void slat_object_set_text_color(SlatObject *slat_object, GColor color) {slat_object->text_color = color;}
 void slat_object_set_background_color(SlatObject *slat_object, GColor color) {slat_object->background_color = color;}
-void slat_object_set_size(SlatObject *slat_object, GSize size) {slat_object->size = size;}
+void slat_object_set_size(SlatObject *slat_object, GSize size) {slat_object->rect.size = size;}
 void slat_object_set_overflow_mode(SlatObject *slat_object, GTextOverflowMode overflow_mode) {slat_object->overflow_mode = overflow_mode;}
+
 
 void slat_object_render(SlatObject *slat_object, GContext *ctx) {
 	GBitmap *screen_bitmap;
@@ -131,14 +132,14 @@ void slat_object_animate(SlatObject *slat_object) {
 
 	/**/
 	
-	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
-		// Move offscreen
+	for(slat_counter = 0; slat_counter < slat_object->rect.size.h; slat_counter++) {
+		// Move offscreen to hide the slat until the scheduled animation kicks in
 		layer_set_frame(bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]), GRect(144, TIME_Y_ORIGIN + slat_counter, 144, 1));
 
 		// Animate slats
-		start_position_x_offset = (((slat_counter & 1) == 1) ? 144 : -144);  // Interleave effect
-		start_position = GRect(start_position_x_offset, TIME_Y_ORIGIN + slat_counter, 144, 1);
-		stop_position = GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN + slat_counter, 144, 1);
+		start_position_x_offset = (((slat_counter & 1) == 1) ? 144 : -slat_object->rect.size.w);  // Interleave effect
+		start_position = GRect(start_position_x_offset, TIME_Y_ORIGIN + slat_counter, slat_object->rect.size.w, 1);
+		stop_position = GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN + slat_counter, slat_object->rect.size.w, 1);
 		
 		// Slide in
 		delay = slat_counter * ANIMATION_DELAY;
@@ -167,7 +168,7 @@ void layer_add_slat_object(Layer *layer, SlatObject *slat_object) {
 
 	/**/
 
-	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+	for(slat_counter = 0; slat_counter < slat_object->rect.size.h; slat_counter++) {
 		layer_add_child(layer, bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]));
 	}
 }
@@ -179,20 +180,16 @@ void layer_add_slat_object(Layer *layer, SlatObject *slat_object) {
 // Private internal functions declared at top of this file
 
 void slat_object_render_text_bitmap(SlatObject *slat_object, GContext *ctx) {
-	GRect text_rect = {{0, 0}, slat_object->size};
-
-	/**/
-
 	// Set background
 	graphics_context_set_fill_color(ctx, slat_object->background_color);
-	graphics_fill_rect(ctx, text_rect, 0, GCornerNone);
+	graphics_fill_rect(ctx, slat_object->rect, 0, GCornerNone);
 
 	// Render text
 	graphics_context_set_text_color(ctx, slat_object->text_color);
 	graphics_draw_text(ctx, 
 											slat_object->text,
 											slat_object->font,
-											text_rect,
+											slat_object->rect,
 											slat_object->overflow_mode,
 											slat_object->text_alignment,
 											NULL);
@@ -204,10 +201,10 @@ void slat_object_set_slat_bitmaps(SlatObject *slat_object) {
 
 	/**/
 
-	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
+	for(slat_counter = 0; slat_counter < slat_object->rect.size.h; slat_counter++) {
 		// Could use memcpy() here instead of destroy/create ???
 		gbitmap_destroy(slat_object->slat_bitmaps[slat_counter]);
-		slat_object->slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->text_bitmap, GRect(0, slat_counter, 144, 1));
+		slat_object->slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->text_bitmap, GRect(slat_object->rect.origin.x, slat_counter, slat_object->rect.size.w, 1));
 		bitmap_layer_set_bitmap(slat_object->slat_layers[slat_counter], slat_object->slat_bitmaps[slat_counter]);
 	}
 }
