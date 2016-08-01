@@ -20,7 +20,7 @@ typedef struct {
 } Slat;
 
 typedef struct {
-	Slat slat;
+	Slat slat[2];
 	const char *text;
 	GFont font;
 	GTextAlignment text_alignment;
