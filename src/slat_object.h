@@ -5,6 +5,8 @@
 
 
 #define MAX_SLAT_COUNT 64
+#define MAX_SCREEN_WIDTH 144
+#define MAX_SCREEN_HEIGHT 168
 
 
 /**/
@@ -22,6 +24,8 @@ typedef struct {
 	GColor background_color;
 	GRect rect;
 	GTextOverflowMode overflow_mode;
+	int slat_start;
+	int slat_count;
 } SlatObject;
 
 
