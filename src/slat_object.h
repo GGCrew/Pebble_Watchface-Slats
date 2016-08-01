@@ -26,6 +26,7 @@ typedef struct {
 	GTextOverflowMode overflow_mode;
 	int slat_start;
 	int slat_count;
+	GPoint origin;
 } SlatObject;
 
 
@@ -41,6 +42,7 @@ void slat_object_set_text_alignment(SlatObject *slat_object, GTextAlignment text
 void slat_object_set_text_color(SlatObject *slat_object, GColor color);
 void slat_object_set_background_color(SlatObject *slat_object, GColor color);
 void slat_object_set_overflow_mode(SlatObject *slat_object, GTextOverflowMode overflow_mode);
+void slat_object_set_origin(SlatObject *slat_object, GPoint point);
 void slat_object_render(SlatObject *slat_object, GContext *ctx);
 void slat_object_animate(SlatObject *slat_object);
 

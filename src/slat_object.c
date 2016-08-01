@@ -4,8 +4,6 @@
 /**/
 
 
-#define TIME_X_ORIGIN 0
-#define TIME_Y_ORIGIN 50
 #define ANIMATION_DURATION 1000
 #define ANIMATION_DELAY 10
 
@@ -67,7 +65,7 @@ SlatObject* slat_object_create(GRect rect) {
 
 	for(slat_counter = slat_object->slat_start; slat_counter < slat_object->slat_count; slat_counter++) {
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_counter: %d", slat_counter);
-		slat_object->slat_layers[slat_counter] = bitmap_layer_create(GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN + slat_counter, slat_object->rect.size.w, 1));
+		slat_object->slat_layers[slat_counter] = bitmap_layer_create(GRect(slat_object->origin.x, slat_object->origin.y + slat_counter, slat_object->rect.size.w, 1));
 		slat_object->slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->text_bitmap, GRect(slat_object->rect.origin.x, slat_counter, slat_object->rect.size.w, 1));
 		bitmap_layer_set_bitmap(slat_object->slat_layers[slat_counter], slat_object->slat_bitmaps[slat_counter]);
 	}
@@ -110,6 +108,7 @@ void slat_object_set_text_color(SlatObject *slat_object, GColor color) {slat_obj
 void slat_object_set_background_color(SlatObject *slat_object, GColor color) {slat_object->background_color = color;}
 void slat_object_set_size(SlatObject *slat_object, GSize size) {slat_object->rect.size = size;}
 void slat_object_set_overflow_mode(SlatObject *slat_object, GTextOverflowMode overflow_mode) {slat_object->overflow_mode = overflow_mode;}
+void slat_object_set_origin(SlatObject *slat_object, GPoint point) {slat_object->origin = point;}
 
 
 void slat_object_render(SlatObject *slat_object, GContext *ctx) {
@@ -166,12 +165,12 @@ void slat_object_animate(SlatObject *slat_object) {
 	
 	for(slat_counter = slat_object->slat_start; slat_counter < slat_object->slat_count; slat_counter++) {
 		// Move offscreen to hide the slat until the scheduled animation kicks in
-		layer_set_frame(bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]), GRect(MAX_SCREEN_WIDTH, TIME_Y_ORIGIN + slat_counter, slat_object->rect.size.w, 1));
+		layer_set_frame(bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]), GRect(MAX_SCREEN_WIDTH, slat_object->origin.y + slat_counter, slat_object->rect.size.w, 1));
 
 		// Animate slats
 		start_position_x_offset = (((slat_counter & 1) == 1) ? slat_object->rect.size.w : -slat_object->rect.size.w);  // Interleave effect
-		start_position = GRect(start_position_x_offset, TIME_Y_ORIGIN + slat_counter, slat_object->rect.size.w, 1);
-		stop_position = GRect(TIME_X_ORIGIN, TIME_Y_ORIGIN + slat_counter, slat_object->rect.size.w, 1);
+		start_position = GRect(start_position_x_offset, slat_object->origin.y + slat_counter, slat_object->rect.size.w, 1);
+		stop_position = GRect(slat_object->origin.x, slat_object->origin.y + slat_counter, slat_object->rect.size.w, 1);
 		
 		// Slide in
 		delay = slat_counter * ANIMATION_DELAY;

@@ -68,6 +68,7 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, text_layer_get_layer(time_text_layer));
 
 	slat_object = slat_object_create((GRect){{0, -14}, {MAX_SCREEN_WIDTH, 49}});  // Just tall enough for the text
+	slat_object_set_origin(slat_object, (GPoint){0, 50});
 	slat_object_set_font(slat_object, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
 	slat_object_set_text_alignment(slat_object, GTextAlignmentCenter);
 	slat_object_set_text_color(slat_object, GColorWhite);
