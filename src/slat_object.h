@@ -14,9 +14,13 @@
 
 typedef struct {
 	GBitmap *text_bitmap;
-	GBitmap *slat_bitmaps[MAX_SLAT_COUNT];
-	BitmapLayer *slat_layers[MAX_SLAT_COUNT];
-	PropertyAnimation *slat_animations[MAX_SLAT_COUNT];
+	GBitmap *bitmaps[MAX_SLAT_COUNT];
+	BitmapLayer *layers[MAX_SLAT_COUNT];
+	PropertyAnimation *animations[MAX_SLAT_COUNT];
+} Slat;
+
+typedef struct {
+	Slat slat;
 	const char *text;
 	GFont font;
 	GTextAlignment text_alignment;

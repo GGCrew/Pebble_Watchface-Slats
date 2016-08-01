@@ -61,13 +61,13 @@ SlatObject* slat_object_create(GRect rect) {
 	
 	// Create blank text bitmap
 	bitmap_format = GBitmapFormat1Bit;	// for Aplite
-	slat_object->text_bitmap = gbitmap_create_blank(slat_object->rect.size, bitmap_format);
+	slat_object->slat.text_bitmap = gbitmap_create_blank(slat_object->rect.size, bitmap_format);
 
 	for(slat_counter = slat_object->slat_start; slat_counter < slat_object->slat_count; slat_counter++) {
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_counter: %d", slat_counter);
-		slat_object->slat_layers[slat_counter] = bitmap_layer_create(GRect(slat_object->origin.x, slat_object->origin.y + slat_counter, slat_object->rect.size.w, 1));
-		slat_object->slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->text_bitmap, GRect(slat_object->rect.origin.x, slat_counter, slat_object->rect.size.w, 1));
-		bitmap_layer_set_bitmap(slat_object->slat_layers[slat_counter], slat_object->slat_bitmaps[slat_counter]);
+		slat_object->slat.layers[slat_counter] = bitmap_layer_create(GRect(slat_object->origin.x, slat_object->origin.y + slat_counter, slat_object->rect.size.w, 1));
+		slat_object->slat.bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->slat.text_bitmap, GRect(slat_object->rect.origin.x, slat_counter, slat_object->rect.size.w, 1));
+		bitmap_layer_set_bitmap(slat_object->slat.layers[slat_counter], slat_object->slat.bitmaps[slat_counter]);
 	}
 	
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_create() complete!");
@@ -83,12 +83,12 @@ void slat_object_destroy(SlatObject *slat_object) {
 
 	for(slat_counter = slat_object->slat_start; slat_counter < slat_object->slat_count; slat_counter++) {
 		APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_counter: %d", slat_counter);
-		gbitmap_destroy(slat_object->slat_bitmaps[slat_counter]);
-		layer_destroy(bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]));
+		gbitmap_destroy(slat_object->slat.bitmaps[slat_counter]);
+		layer_destroy(bitmap_layer_get_layer(slat_object->slat.layers[slat_counter]));
 	}
 
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_destroy(slat_object->text_bitmap)...");
-	gbitmap_destroy(slat_object->text_bitmap);
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_destroy(slat_object->slat.text_bitmap)...");
+	gbitmap_destroy(slat_object->slat.text_bitmap);
 
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "free(slat_object)...");
 	free(slat_object);
@@ -133,9 +133,9 @@ void slat_object_render(SlatObject *slat_object, GContext *ctx) {
 	graphics_release_frame_buffer(ctx, screen_bitmap);
 
 	// Get time bitmap data
-	text_bitmap_data = gbitmap_get_data(slat_object->text_bitmap);
-	text_bitmap_format = gbitmap_get_format(slat_object->text_bitmap);
-	text_bitmap_row_size = gbitmap_get_bytes_per_row(slat_object->text_bitmap);
+	text_bitmap_data = gbitmap_get_data(slat_object->slat.text_bitmap);
+	text_bitmap_format = gbitmap_get_format(slat_object->slat.text_bitmap);
+	text_bitmap_row_size = gbitmap_get_bytes_per_row(slat_object->slat.text_bitmap);
 
 	// Point the screen bitmap (aka frame buffer) to the time bitmap (so we can render "offscreen")
 	// This trick pulled from 2015 Pebble Developer Retreat presentation on Graphics by Matthew Hungerford
@@ -165,7 +165,7 @@ void slat_object_animate(SlatObject *slat_object) {
 	
 	for(slat_counter = slat_object->slat_start; slat_counter < slat_object->slat_count; slat_counter++) {
 		// Move offscreen to hide the slat until the scheduled animation kicks in
-		layer_set_frame(bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]), GRect(MAX_SCREEN_WIDTH, slat_object->origin.y + slat_counter, slat_object->rect.size.w, 1));
+		layer_set_frame(bitmap_layer_get_layer(slat_object->slat.layers[slat_counter]), GRect(MAX_SCREEN_WIDTH, slat_object->origin.y + slat_counter, slat_object->rect.size.w, 1));
 
 		// Animate slats
 		start_position_x_offset = (((slat_counter & 1) == 1) ? slat_object->rect.size.w : -slat_object->rect.size.w);  // Interleave effect
@@ -175,21 +175,21 @@ void slat_object_animate(SlatObject *slat_object) {
 		// Slide in
 		delay = slat_counter * ANIMATION_DELAY;
 		animation_counter = slat_counter;
-		slat_object->slat_animations[animation_counter] = property_animation_create_layer_frame(
-			bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]), 
+		slat_object->slat.animations[animation_counter] = property_animation_create_layer_frame(
+			bitmap_layer_get_layer(slat_object->slat.layers[slat_counter]), 
 			&start_position, 
 			&stop_position
 		);
-		animation_set_curve(property_animation_get_animation(slat_object->slat_animations[animation_counter]), AnimationCurveEaseOut);
-		animation_set_delay(property_animation_get_animation(slat_object->slat_animations[animation_counter]), 0 + delay);
-		animation_set_duration(property_animation_get_animation(slat_object->slat_animations[animation_counter]), ANIMATION_DURATION);
-		animation_set_handlers(property_animation_get_animation(slat_object->slat_animations[animation_counter]), 
+		animation_set_curve(property_animation_get_animation(slat_object->slat.animations[animation_counter]), AnimationCurveEaseOut);
+		animation_set_delay(property_animation_get_animation(slat_object->slat.animations[animation_counter]), 0 + delay);
+		animation_set_duration(property_animation_get_animation(slat_object->slat.animations[animation_counter]), ANIMATION_DURATION);
+		animation_set_handlers(property_animation_get_animation(slat_object->slat.animations[animation_counter]), 
 														(AnimationHandlers) {
 															.started = NULL,
 															.stopped = (AnimationStoppedHandler) slat_animation_stopped,
 														},
-														slat_object->slat_animations[animation_counter]);
-		animation_schedule(property_animation_get_animation(slat_object->slat_animations[animation_counter]));
+														slat_object->slat.animations[animation_counter]);
+		animation_schedule(property_animation_get_animation(slat_object->slat.animations[animation_counter]));
 	}
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_animate() complete!");
 }
@@ -201,7 +201,7 @@ void layer_add_slat_object(Layer *layer, SlatObject *slat_object) {
 	/**/
 
 	for(slat_counter = slat_object->slat_start; slat_counter < slat_object->slat_count; slat_counter++) {
-		layer_add_child(layer, bitmap_layer_get_layer(slat_object->slat_layers[slat_counter]));
+		layer_add_child(layer, bitmap_layer_get_layer(slat_object->slat.layers[slat_counter]));
 	}
 }
 
@@ -241,13 +241,13 @@ void slat_object_set_slat_bitmaps(SlatObject *slat_object) {
 		// Could use memcpy() here instead of destroy/create ???
 
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_destroy");
-		gbitmap_destroy(slat_object->slat_bitmaps[slat_counter]);
+		gbitmap_destroy(slat_object->slat.bitmaps[slat_counter]);
 
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_create_as_sub_bitmap");
-		slat_object->slat_bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->text_bitmap, GRect(0, slat_counter, slat_object->rect.size.w, 1));
+		slat_object->slat.bitmaps[slat_counter] = gbitmap_create_as_sub_bitmap(slat_object->slat.text_bitmap, GRect(0, slat_counter, slat_object->rect.size.w, 1));
 
 		//APP_LOG(APP_LOG_LEVEL_DEBUG, "bitmap_layer_set_bitmap");
-		bitmap_layer_set_bitmap(slat_object->slat_layers[slat_counter], slat_object->slat_bitmaps[slat_counter]);
+		bitmap_layer_set_bitmap(slat_object->slat.layers[slat_counter], slat_object->slat.bitmaps[slat_counter]);
 	}
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_set_slat_bitmaps() complete!");
 }
