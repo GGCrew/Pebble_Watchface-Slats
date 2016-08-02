@@ -34,6 +34,7 @@ typedef struct {
 	int slat_piece_count;
 	int current_slat_index;
 	int next_slat_index;
+	bool dirty;
 } SlatObject;
 
 
@@ -52,6 +53,7 @@ void slat_object_set_overflow_mode(SlatObject *slat_object, GTextOverflowMode ov
 void slat_object_set_origin(SlatObject *slat_object, GPoint point);
 void slat_object_render(SlatObject *slat_object, GContext *ctx);
 void slat_object_animate(SlatObject *slat_object);
+void slat_object_mark_dirty(SlatObject *slat_object);
 
 void layer_add_slat_object(Layer *layer, SlatObject *slat_object);
 

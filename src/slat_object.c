@@ -26,6 +26,7 @@ void slat_animation_stopped(Animation *animation, bool finished, void *property_
 
 SlatObject* slat_object_create(GRect rect) {
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_create()...");
+
 	int slat_counter;
 	int slat_piece_counter;
 	GBitmapFormat bitmap_format;
@@ -91,16 +92,16 @@ void slat_object_destroy(SlatObject *slat_object) {
 
 	for(slat_counter = 0; slat_counter < SLAT_COUNT; slat_counter++) {
 		for(slat_piece_counter = slat_object->slat_piece_start; slat_piece_counter < slat_object->slat_piece_count; slat_piece_counter++) {
-			APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_piece_counter: %d", slat_piece_counter);
+			//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_piece_counter: %d", slat_piece_counter);
 			gbitmap_destroy(slat_object->slat[slat_counter].bitmaps[slat_piece_counter]);
 			layer_destroy(bitmap_layer_get_layer(slat_object->slat[slat_counter].layers[slat_piece_counter]));
 		}
 
-		APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_destroy(slat_object->slat[%d].text_bitmap)...", slat_counter);
+		//APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_destroy(slat_object->slat[%d].text_bitmap)...", slat_counter);
 		gbitmap_destroy(slat_object->slat[slat_counter].text_bitmap);
 	}
 
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "free(slat_object)...");
+	//APP_LOG(APP_LOG_LEVEL_DEBUG, "free(slat_object)...");
 	free(slat_object);
 
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_destroy() complete!");
@@ -130,29 +131,38 @@ void slat_object_render(SlatObject *slat_object, GContext *ctx) {
 
 	/**/
 
-	// Get buffer data (which also locks the buffer)
-	screen_bitmap = graphics_capture_frame_buffer(ctx);
-	screen_bitmap_data = gbitmap_get_data(screen_bitmap);
-	screen_bitmap_format = gbitmap_get_format(screen_bitmap);
-	screen_bitmap_row_size = gbitmap_get_bytes_per_row(screen_bitmap);
-	// Unlock the buffer
-	graphics_release_frame_buffer(ctx, screen_bitmap);
+	if(slat_object->dirty) {
+		//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object marked dirty -- rendering");
 
-	// Get time bitmap data
-	text_bitmap_data = gbitmap_get_data(slat_object->slat[slat_object->next_slat_index].text_bitmap);
-	text_bitmap_format = gbitmap_get_format(slat_object->slat[slat_object->next_slat_index].text_bitmap);
-	text_bitmap_row_size = gbitmap_get_bytes_per_row(slat_object->slat[slat_object->next_slat_index].text_bitmap);
+		// Get buffer data (which also locks the buffer)
+		screen_bitmap = graphics_capture_frame_buffer(ctx);
+		screen_bitmap_data = gbitmap_get_data(screen_bitmap);
+		screen_bitmap_format = gbitmap_get_format(screen_bitmap);
+		screen_bitmap_row_size = gbitmap_get_bytes_per_row(screen_bitmap);
+		// Unlock the buffer
+		graphics_release_frame_buffer(ctx, screen_bitmap);
 
-	// Point the screen bitmap (aka frame buffer) to the time bitmap (so we can render "offscreen")
-	// This trick pulled from 2015 Pebble Developer Retreat presentation on Graphics by Matthew Hungerford
-	gbitmap_set_data(screen_bitmap, text_bitmap_data, text_bitmap_format, text_bitmap_row_size, false);
+		// Get time bitmap data
+		text_bitmap_data = gbitmap_get_data(slat_object->slat[slat_object->next_slat_index].text_bitmap);
+		text_bitmap_format = gbitmap_get_format(slat_object->slat[slat_object->next_slat_index].text_bitmap);
+		text_bitmap_row_size = gbitmap_get_bytes_per_row(slat_object->slat[slat_object->next_slat_index].text_bitmap);
 
-	slat_object_render_text_bitmap(slat_object, ctx);
+		// Point the screen bitmap (aka frame buffer) to the time bitmap (so we can render "offscreen")
+		// This trick pulled from 2015 Pebble Developer Retreat presentation on Graphics by Matthew Hungerford
+		gbitmap_set_data(screen_bitmap, text_bitmap_data, text_bitmap_format, text_bitmap_row_size, false);
 
-	// Point the screen bitmap (aka frame buffer) back to it's original data
-	gbitmap_set_data(screen_bitmap, screen_bitmap_data, screen_bitmap_format, screen_bitmap_row_size, false);
+		slat_object_render_text_bitmap(slat_object, ctx);
 
-	slat_object_set_slat_bitmaps(slat_object);
+		// Point the screen bitmap (aka frame buffer) back to it's original data
+		gbitmap_set_data(screen_bitmap, screen_bitmap_data, screen_bitmap_format, screen_bitmap_row_size, false);
+
+		slat_object_set_slat_bitmaps(slat_object);
+
+		slat_object->current_slat_index = slat_object->next_slat_index;
+		slat_object->next_slat_index = slat_object_get_next_slat_index(slat_object);
+
+		slat_object->dirty = false;
+	}
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_render() complete!");
 }
 
@@ -218,10 +228,12 @@ void slat_object_animate(SlatObject *slat_object) {
 		animation_schedule(property_animation_get_animation(slat_object->slat[slat_object->next_slat_index].animations[slat_piece_counter]));
 	}
 
-	//slat_object->current_slat_index = slat_object->next_slat_index;
-	//slat_object->next_slat_index = slat_object_get_next_slat_index(slat_object);
-
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_animate() complete!");
+}
+
+
+void slat_object_mark_dirty(SlatObject *slat_object) {
+	slat_object->dirty = true;
 }
 
 
@@ -246,6 +258,7 @@ void layer_add_slat_object(Layer *layer, SlatObject *slat_object) {
 
 void slat_object_render_text_bitmap(SlatObject *slat_object, GContext *ctx) {
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_render_text_bitmap()...");
+
 	// Set background
 	graphics_context_set_fill_color(ctx, slat_object->background_color);
 	graphics_fill_rect(ctx, slat_object->rect, 0, GCornerNone);
@@ -265,21 +278,16 @@ void slat_object_render_text_bitmap(SlatObject *slat_object, GContext *ctx) {
 
 void slat_object_set_slat_bitmaps(SlatObject *slat_object) {
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_set_slat_bitmaps()...");
+
 	int slat_piece_counter;
 
 	/**/
 
 	for(slat_piece_counter = slat_object->slat_piece_start; slat_piece_counter < slat_object->slat_piece_count; slat_piece_counter++) {
-		//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_piece_counter: %d", slat_piece_counter);
 		// Could use memcpy() here instead of destroy/create ???
 
-		//APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_destroy");
 		gbitmap_destroy(slat_object->slat[slat_object->next_slat_index].bitmaps[slat_piece_counter]);
-
-		//APP_LOG(APP_LOG_LEVEL_DEBUG, "gbitmap_create_as_sub_bitmap");
 		slat_object->slat[slat_object->next_slat_index].bitmaps[slat_piece_counter] = gbitmap_create_as_sub_bitmap(slat_object->slat[slat_object->next_slat_index].text_bitmap, GRect(0, slat_piece_counter, slat_object->rect.size.w, 1));
-
-		//APP_LOG(APP_LOG_LEVEL_DEBUG, "bitmap_layer_set_bitmap");
 		bitmap_layer_set_bitmap(slat_object->slat[slat_object->next_slat_index].layers[slat_piece_counter], slat_object->slat[slat_object->next_slat_index].bitmaps[slat_piece_counter]);
 	}
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_set_slat_bitmaps() complete!");

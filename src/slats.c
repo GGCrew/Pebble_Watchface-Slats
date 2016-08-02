@@ -17,12 +17,13 @@ static SlatObject *slat_object;
 
 void time_text_layer_update_proc(Layer *layer, GContext *ctx)
 {
-	slat_object_set_text(slat_object, text_layer_get_text(time_text_layer));
+	//APP_LOG(APP_LOG_LEVEL_DEBUG, "time_text_layer_update_proc()...");
 	slat_object_render(slat_object, ctx);
 }
 
 
 void update_display_time(struct tm *tick_time) {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "update_display_time()...");
   // Need to be static because they're used by the system later.
   static char time_text[] = "00:00";
   char *time_format;
@@ -43,13 +44,27 @@ void update_display_time(struct tm *tick_time) {
     memmove(time_text, &time_text[1], sizeof(time_text) - 1);
   }
 
-	text_layer_set_text(time_text_layer, time_text);
+	//text_layer_set_text(time_text_layer, time_text);
+	slat_object_set_text(slat_object, time_text);
+	slat_object_mark_dirty(slat_object);
+	layer_mark_dirty(text_layer_get_layer(time_text_layer));
 }
 
 
 void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
 	update_display_time(tick_time);
 	slat_object_animate(slat_object);
+}
+
+
+void handle_second_tick(struct tm *tick_time, TimeUnits units_changed) {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "tm_sec: %d", tick_time->tm_sec);
+	if((tick_time->tm_sec % 60) == 0) {
+		update_display_time(tick_time);
+	}
+	if((tick_time->tm_sec % 5) == 0) {
+		slat_object_animate(slat_object);
+	}
 }
 
 
@@ -102,6 +117,7 @@ static void init(void) {
   window_set_background_color(window, GColorBlack);
 
 	tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
+	//tick_timer_service_subscribe(SECOND_UNIT, handle_second_tick);
 }
 
 
