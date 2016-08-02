@@ -4,9 +4,10 @@
 /**/
 
 
-#define MAX_SLAT_COUNT 64
+#define MAX_SLAT_PIECES 64
 #define MAX_SCREEN_WIDTH 144
 #define MAX_SCREEN_HEIGHT 168
+#define SLAT_COUNT 2
 
 
 /**/
@@ -14,23 +15,25 @@
 
 typedef struct {
 	GBitmap *text_bitmap;
-	GBitmap *bitmaps[MAX_SLAT_COUNT];
-	BitmapLayer *layers[MAX_SLAT_COUNT];
-	PropertyAnimation *animations[MAX_SLAT_COUNT];
+	GBitmap *bitmaps[MAX_SLAT_PIECES];
+	BitmapLayer *layers[MAX_SLAT_PIECES];
+	PropertyAnimation *animations[MAX_SLAT_PIECES];
 } Slat;
 
 typedef struct {
-	Slat slat[2];
+	Slat slat[SLAT_COUNT];
 	const char *text;
 	GFont font;
 	GTextAlignment text_alignment;
 	GColor text_color;
 	GColor background_color;
+	GPoint origin;
 	GRect rect;
 	GTextOverflowMode overflow_mode;
-	int slat_start;
-	int slat_count;
-	GPoint origin;
+	int slat_piece_start;
+	int slat_piece_count;
+	int current_slat_index;
+	int next_slat_index;
 } SlatObject;
 
 
