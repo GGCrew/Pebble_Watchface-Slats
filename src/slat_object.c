@@ -16,7 +16,15 @@
 void slat_object_render_text_bitmap(SlatObject *slat_object, GContext *ctx);
 void slat_object_set_slat_bitmaps(SlatObject *slat_object);
 int slat_object_get_next_slat_index(SlatObject *slat_object);
+void slat_object_schedule_exit_animation(SlatObject *slat_object);
+void slat_object_schedule_entrance_animation(SlatObject *slat_object);
 void slat_animation_stopped(Animation *animation, bool finished, void *property_animation);
+void entrance_animation_timer_callback(void *slat_object);
+
+/**/
+
+
+Animation *trigger_animation;
 
 
 /**/
@@ -169,6 +177,77 @@ void slat_object_render(SlatObject *slat_object, GContext *ctx) {
 
 void slat_object_animate(SlatObject *slat_object) {
 	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_animate()...");
+//	int slat_piece_counter;
+//	int delay;
+//	int x_offset;
+//
+//	GRect start_position;
+//	GRect stop_position;
+
+	/**/
+
+	slat_object_schedule_exit_animation(slat_object);
+	
+	// Set up trigger for entrance animations
+	app_timer_register(2000, entrance_animation_timer_callback, slat_object);
+
+
+//	for(slat_piece_counter = slat_object->slat_piece_start; slat_piece_counter < slat_object->slat_piece_count; slat_piece_counter++) {
+//		// -- Exit animation -- 
+//		x_offset = (((slat_piece_counter & 1) == 1) ? slat_object->rect.size.w : -slat_object->rect.size.w);  // Interleave effect
+//		//start_position = NULL;
+//		stop_position = GRect(slat_object->origin.x, slat_object->origin.y + slat_piece_counter + 50, slat_object->rect.size.w, 1);
+//
+//		delay = slat_piece_counter * ANIMATION_DELAY;
+//		slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter] = property_animation_create_layer_frame(
+//			bitmap_layer_get_layer(slat_object->slat[slat_object->current_slat_index].layers[slat_piece_counter]), 
+//			NULL, 
+//			&stop_position
+//		);
+//		animation_set_curve(property_animation_get_animation(slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter]), AnimationCurveEaseOut);
+//		animation_set_delay(property_animation_get_animation(slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter]), 0 + delay);
+//		animation_set_duration(property_animation_get_animation(slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter]), ANIMATION_DURATION);
+//		animation_set_handlers(property_animation_get_animation(slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter]), 
+//														(AnimationHandlers) {
+//															.started = NULL,
+//															.stopped = (AnimationStoppedHandler) slat_animation_stopped,
+//														},
+//														slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter]);
+//		animation_schedule(property_animation_get_animation(slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter]));
+//
+//		
+//		// -- Entrance animation --
+//		// Move offscreen to hide the slat until the scheduled animation kicks in
+//		layer_set_frame(bitmap_layer_get_layer(slat_object->slat[slat_object->next_slat_index].layers[slat_piece_counter]), GRect(MAX_SCREEN_WIDTH, slat_object->origin.y + slat_piece_counter, slat_object->rect.size.w, 1));
+//
+//		x_offset = (((slat_piece_counter & 1) == 1) ? slat_object->rect.size.w : -slat_object->rect.size.w);  // Interleave effect
+//		start_position = GRect(x_offset, slat_object->origin.y + slat_piece_counter, slat_object->rect.size.w, 1);
+//		stop_position = GRect(slat_object->origin.x, slat_object->origin.y + slat_piece_counter, slat_object->rect.size.w, 1);
+//
+//		delay = slat_piece_counter * ANIMATION_DELAY;
+//		slat_object->slat[slat_object->next_slat_index].animations[slat_piece_counter] = property_animation_create_layer_frame(
+//			bitmap_layer_get_layer(slat_object->slat[slat_object->next_slat_index].layers[slat_piece_counter]), 
+//			&start_position, 
+//			&stop_position
+//		);
+//		animation_set_curve(property_animation_get_animation(slat_object->slat[slat_object->next_slat_index].animations[slat_piece_counter]), AnimationCurveEaseOut);
+//		animation_set_delay(property_animation_get_animation(slat_object->slat[slat_object->next_slat_index].animations[slat_piece_counter]), 0 + delay);
+//		animation_set_duration(property_animation_get_animation(slat_object->slat[slat_object->next_slat_index].animations[slat_piece_counter]), ANIMATION_DURATION);
+//		animation_set_handlers(property_animation_get_animation(slat_object->slat[slat_object->next_slat_index].animations[slat_piece_counter]), 
+//														(AnimationHandlers) {
+//															.started = NULL,
+//															.stopped = (AnimationStoppedHandler) slat_animation_stopped,
+//														},
+//														slat_object->slat[slat_object->next_slat_index].animations[slat_piece_counter]);
+//		animation_schedule(property_animation_get_animation(slat_object->slat[slat_object->next_slat_index].animations[slat_piece_counter]));
+//	}
+
+	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_animate() complete!");
+}
+
+
+void slat_object_schedule_exit_animation(SlatObject *slat_object) {
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_schedule_exit_animation()...");
 	int slat_piece_counter;
 	int delay;
 	int x_offset;
@@ -178,16 +257,22 @@ void slat_object_animate(SlatObject *slat_object) {
 
 	/**/
 
+	delay = ANIMATION_DELAY;
+
 	for(slat_piece_counter = slat_object->slat_piece_start; slat_piece_counter < slat_object->slat_piece_count; slat_piece_counter++) {
+		//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_piece_counter: %d", slat_piece_counter);
+
+		layer_set_frame(bitmap_layer_get_layer(slat_object->slat[slat_object->current_slat_index].layers[slat_piece_counter]), (GRect){{0, -1}, {0, 0}});
+
 		// -- Exit animation -- 
 		x_offset = (((slat_piece_counter & 1) == 1) ? slat_object->rect.size.w : -slat_object->rect.size.w);  // Interleave effect
-		//start_position = NULL;
-		stop_position = GRect(slat_object->origin.x, slat_object->origin.y + slat_piece_counter + 50, slat_object->rect.size.w, 1);
+		start_position = GRect(slat_object->origin.x, slat_object->origin.y + slat_piece_counter, slat_object->rect.size.w, 1);
+		stop_position = GRect(x_offset, slat_object->origin.y + slat_piece_counter, slat_object->rect.size.w, 1);
 
 		delay = slat_piece_counter * ANIMATION_DELAY;
 		slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter] = property_animation_create_layer_frame(
 			bitmap_layer_get_layer(slat_object->slat[slat_object->current_slat_index].layers[slat_piece_counter]), 
-			NULL, 
+			&start_position, 
 			&stop_position
 		);
 		animation_set_curve(property_animation_get_animation(slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter]), AnimationCurveEaseOut);
@@ -200,8 +285,25 @@ void slat_object_animate(SlatObject *slat_object) {
 														},
 														slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter]);
 		animation_schedule(property_animation_get_animation(slat_object->slat[slat_object->current_slat_index].animations[slat_piece_counter]));
+	}
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_piece_counter: complete!");
 
-		
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_schedule_exit_animation() complete!");
+
+}
+
+
+void slat_object_schedule_entrance_animation(SlatObject *slat_object) {
+	int slat_piece_counter;
+	int delay;
+	int x_offset;
+
+	GRect start_position;
+	GRect stop_position;
+
+	/**/
+
+	for(slat_piece_counter = slat_object->slat_piece_start; slat_piece_counter < slat_object->slat_piece_count; slat_piece_counter++) {
 		// -- Entrance animation --
 		// Move offscreen to hide the slat until the scheduled animation kicks in
 		layer_set_frame(bitmap_layer_get_layer(slat_object->slat[slat_object->next_slat_index].layers[slat_piece_counter]), GRect(MAX_SCREEN_WIDTH, slat_object->origin.y + slat_piece_counter, slat_object->rect.size.w, 1));
@@ -227,8 +329,6 @@ void slat_object_animate(SlatObject *slat_object) {
 														slat_object->slat[slat_object->next_slat_index].animations[slat_piece_counter]);
 		animation_schedule(property_animation_get_animation(slat_object->slat[slat_object->next_slat_index].animations[slat_piece_counter]));
 	}
-
-	//APP_LOG(APP_LOG_LEVEL_DEBUG, "slat_object_animate() complete!");
 }
 
 
@@ -303,4 +403,8 @@ void slat_animation_stopped(Animation *animation, bool finished, void *property_
 	if(finished){property_animation_destroy(property_animation);}
 }
 
+
+void entrance_animation_timer_callback(void *slat_object) {
+	slat_object_schedule_entrance_animation(slat_object);
+}
 
